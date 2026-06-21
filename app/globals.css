@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+/* ============================================================
+   STRIDE — brand design tokens
+   Canvas ivory · near-black ink · SKY-BLUE GLASS accent · white highlights
+   ============================================================ */
+@theme {
+  /* Surfaces */
+  --color-canvas: #f5f2ec; /* ivory page background */
+  --color-canvas-soft: #ece7dc; /* deeper section bg */
+  --color-ink: #121417; /* near-black text / dark surfaces */
+  --color-ink-soft: #3a3f45; /* secondary text */
+  --color-muted: #868d95; /* tertiary text / placeholders */
+  --color-line: #d9d3c7; /* hairline borders on canvas */
+  --color-line-ink: #262b30; /* borders on dark surfaces */
+
+  /* Sky-blue accent system */
+  --color-accent: #0e7ab0; /* text-safe sky (AA on ivory) */
+  --color-accent-deep: #0a5e89; /* hover / pressed */
+  --color-accent-bright: #38bdf8; /* glows / on-dark accents */
+  --color-accent-soft: #dceefb; /* accent tint surface */
+  --color-sky: #6cc5ef;
+
+  --color-success: #2f7d4f;
+  --color-danger: #c0362c;
+  --color-warning: #b8791f;
+
+  /* Semantic aliases */
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-ring: var(--color-accent-bright);
+
+  /* Typography */
+  --font-display: var(--font-anton);
+  --font-script: var(--font-script);
+  --font-sans: var(--font-inter);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Layered, tinted shadows */
+  --shadow-soft: 0 1px 2px rgba(18, 20, 23, 0.04),
+    0 8px 24px -10px rgba(18, 20, 23, 0.14);
+  --shadow-float: 0 2px 6px rgba(18, 20, 23, 0.06),
+    0 22px 48px -18px rgba(18, 20, 23, 0.26);
+  --shadow-sky: 0 8px 32px -8px rgba(56, 189, 248, 0.5);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@media (hover: none) {
+  a,
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-bright);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Display + script helpers */
+.font-display {
+  font-family: var(--font-display), Impact, sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+/* ============================================================
+   Glass system — frosted sky-blue surfaces
+   ============================================================ */
+.glass {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+.glass-sky {
+  background: linear-gradient(
+    135deg,
+    rgba(108, 197, 239, 0.22),
+    rgba(56, 189, 248, 0.08)
+  );
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.glass-ink {
+  background: rgba(18, 20, 23, 0.55);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Subtle entrance (transform/opacity only) */
+@keyframes stride-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: stride-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Scroll reveal — content is ALWAYS visible (opacity 1); only a subtle slide is
+   animated on scroll where supported. No JS, no hidden-content risk, low-data
+   friendly, graceful on browsers without scroll-driven animations. */
+.reveal {
+  opacity: 1;
+}
+@keyframes reveal-slide {
+  from {
+    transform: translateY(22px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-slide linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+}
+
+/* Mobile bottom-nav icon bounce */
+@keyframes iconBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-0.28em);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-0.1em);
+  }
+}
+
+/* Animated gradient sheen for the wordmark (premium, on-brand) */
+@keyframes sky-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.text-sky-sheen {
+  background: linear-gradient(
+    100deg,
+    var(--color-accent) 0%,
+    var(--color-accent-bright) 35%,
+    var(--color-sky) 50%,
+    var(--color-accent-bright) 65%,
+    var(--color-accent) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sky-sheen 6s linear infinite;
+}
+
+/* Pause-on-hover for the auto-advancing showcase */
+.pause-on-hover:hover .marquee-track {
+  animation-play-state: paused;
+}

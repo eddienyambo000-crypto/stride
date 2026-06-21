@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 const TABS = [
   { href: "/admin", label: "Orders" },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/site", label: "Site" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

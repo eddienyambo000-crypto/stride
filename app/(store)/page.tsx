@@ -5,15 +5,18 @@ import { ButtonLink } from "@/components/ui/Button";
 import { JsonLd } from "@/components/JsonLd";
 import { NewArrivals } from "@/components/NewArrivals";
 import { Reveal } from "@/components/Reveal";
+import { HeroVideo } from "@/components/HeroVideo";
+import { getSiteConfig } from "@/lib/site-config";
 import { SITE } from "@/lib/site";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [bestSellers, collections, allProducts] = await Promise.all([
+  const [bestSellers, collections, allProducts, siteConfig] = await Promise.all([
     getBestSellers(4),
     getCollections(),
     getProducts(),
+    getSiteConfig(),
   ]);
   const newArrivals = [...allProducts]
     .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
@@ -99,7 +102,8 @@ export default async function HomePage() {
               "radial-gradient(62% 52% at 80% 0%, rgba(56,189,248,0.20), transparent 70%), radial-gradient(50% 50% at 0% 100%, rgba(18,20,23,0.06), transparent 70%)",
           }}
         />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-14 pb-16 sm:pt-20 sm:pb-24">
+        {siteConfig.heroVideoUrl && <HeroVideo src={siteConfig.heroVideoUrl} />}
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-14 pb-16 sm:pt-20 sm:pb-24">
           <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-8 items-center">
             <div className="animate-rise">
               <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">

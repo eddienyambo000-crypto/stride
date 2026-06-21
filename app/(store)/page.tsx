@@ -43,6 +43,51 @@ export default async function HomePage() {
           },
         }}
       />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ClothingStore",
+          "@id": `${SITE.url}/#store`,
+          name: SITE.name,
+          image: `${SITE.url}/icon`,
+          url: SITE.url,
+          telephone: `+${SITE.whatsapp}`,
+          priceRange: "RWF 12,000–45,000",
+          currenciesAccepted: "RWF",
+          paymentAccepted: "Cash, Mobile Money (MTN MoMo, Airtel Money)",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Remera, KG 330 St",
+            addressLocality: "Kigali",
+            addressCountry: "RW",
+          },
+          geo: { "@type": "GeoCoordinates", latitude: -1.9536, longitude: 30.0606 },
+          areaServed: [
+            { "@type": "City", name: "Kigali" },
+            { "@type": "Country", name: "Rwanda" },
+          ],
+          openingHoursSpecification: {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            opens: "08:00",
+            closes: "20:00",
+          },
+          sameAs: [SITE.socials.instagram],
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: SITE.name,
+          url: SITE.url,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: `${SITE.url}/shop?q={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
 
       {/* ───────── Hero ───────── */}
       <section className="relative overflow-hidden">

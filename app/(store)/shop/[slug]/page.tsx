@@ -72,11 +72,39 @@ export default async function ProductPage({
             url: `${SITE.url}/shop/${product.slug}`,
             priceCurrency: "RWF",
             price: String(product.price_rwf),
+            priceValidUntil: `${new Date().getFullYear() + 1}-12-31`,
+            itemCondition: "https://schema.org/NewCondition",
             availability:
               product.stock_status === "sold_out"
                 ? "https://schema.org/OutOfStock"
                 : "https://schema.org/InStock",
             seller: { "@type": "Organization", name: SITE.name },
+            // Shipping + returns → eligible for Google free product listings & rich results
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingRate: {
+                "@type": "MonetaryAmount",
+                value: "2000",
+                currency: "RWF",
+              },
+              shippingDestination: {
+                "@type": "DefinedRegion",
+                addressCountry: "RW",
+              },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 4, unitCode: "DAY" },
+              },
+            },
+            hasMerchantReturnPolicy: {
+              "@type": "MerchantReturnPolicy",
+              applicableCountry: "RW",
+              returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+              merchantReturnDays: 2,
+              returnMethod: "https://schema.org/ReturnByMail",
+              returnFees: "https://schema.org/FreeReturn",
+            },
           },
         }}
       />

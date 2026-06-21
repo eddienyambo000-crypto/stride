@@ -51,6 +51,7 @@ export function Footer() {
           </FooterCol>
 
           <FooterCol title="Help">
+            <FooterLink href="/faq">FAQ</FooterLink>
             <FooterLink href="/contact">Contact</FooterLink>
             <FooterLink href="/returns">Returns &amp; exchanges</FooterLink>
             <FooterLink href="/privacy">Privacy</FooterLink>

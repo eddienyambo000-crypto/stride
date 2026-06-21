@@ -49,6 +49,23 @@ export function ProductManager({
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function uploadImage(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.url) {
+      setForm((f) => (f ? { ...f, image_url: data.url } : f));
+    } else {
+      setUploadError(data.error ?? "Upload failed.");
+    }
+    setUploading(false);
+  }
 
   function openNew() {
     setError(null);
@@ -234,7 +251,57 @@ export function ProductManager({
               />
               <Input label="Sizes (comma separated)" value={form.sizes} onChange={(v) => setForm({ ...form, sizes: v })} />
               <Input label="Colours (comma separated)" value={form.colors} onChange={(v) => setForm({ ...form, colors: v })} />
-              <Input label="Image URL" value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
+              {/* Image upload */}
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">Product photo</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-line bg-canvas-soft">
+                    {form.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.image_url} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center text-[10px] text-muted text-center px-1">
+                        No photo
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-ink text-canvas text-sm font-semibold px-4 py-2.5 cursor-pointer hover:bg-ink-soft transition-colors",
+                        uploading && "opacity-60 pointer-events-none",
+                      )}
+                    >
+                      {uploading ? "Uploading…" : form.image_url ? "Change photo" : "Upload photo"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/avif"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadImage(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <p className="mt-1.5 text-xs text-muted">PNG/JPG/WebP, up to 5MB.</p>
+                    {uploadError && (
+                      <p className="mt-1 text-xs text-danger">{uploadError}</p>
+                    )}
+                  </div>
+                </div>
+                <details className="mt-2">
+                  <summary className="text-xs text-muted cursor-pointer">
+                    or paste an image link
+                  </summary>
+                  <input
+                    value={form.image_url}
+                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                    placeholder="https://…"
+                    className="mt-2 w-full h-10 rounded-[var(--radius-md)] border border-line bg-canvas px-3 text-sm outline-none focus:border-accent"
+                  />
+                </details>
+              </div>
               <div>
                 <label className="block text-sm font-semibold mb-1.5">Description</label>
                 <textarea

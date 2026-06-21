@@ -36,29 +36,24 @@ export async function PATCH(
   if (body.sizes != null) patch.sizes = parseList(body.sizes);
   if (body.colors != null) patch.colors = parseList(body.colors);
 
-  const { error } = await supabase.from("products").update(patch).eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (Object.keys(patch).length) {
+    const { error } = await supabase.from("products").update(patch).eq("id", id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 
-  if (body.image_url) {
-    const { data: existing } = await supabase
-      .from("product_images")
-      .select("id")
-      .eq("product_id", id)
-      .order("sort_order")
-      .limit(1)
-      .maybeSingle();
-    if (existing) {
-      await supabase
-        .from("product_images")
-        .update({ url: String(body.image_url), alt: String(body.image_alt ?? "") })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("product_images").insert({
-        product_id: id,
-        url: String(body.image_url),
-        alt: String(body.image_alt ?? ""),
-        sort_order: 1,
-      });
+  // When images[] is sent, replace the full set (handles add/remove/reorder).
+  if (Array.isArray(body.images)) {
+    await supabase.from("product_images").delete().eq("product_id", id);
+    const urls = body.images.map(String).slice(0, 10);
+    if (urls.length) {
+      await supabase.from("product_images").insert(
+        urls.map((url: string, i: number) => ({
+          product_id: id,
+          url,
+          alt: body.name ? String(body.name) : "",
+          sort_order: i + 1,
+        })),
+      );
     }
   }
 

@@ -18,9 +18,10 @@ interface FormState {
   is_best_seller: boolean;
   sizes: string;
   colors: string;
-  image_url: string;
-  image_alt: string;
+  images: string[];
 }
+
+const MAX_IMAGES = 10;
 
 const empty = (collection: string): FormState => ({
   name: "",
@@ -32,8 +33,7 @@ const empty = (collection: string): FormState => ({
   is_best_seller: false,
   sizes: "S, M, L, XL",
   colors: "",
-  image_url: "",
-  image_alt: "",
+  images: [],
 });
 
 export function ProductManager({
@@ -52,19 +52,43 @@ export function ProductManager({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  async function uploadImage(file: File) {
-    setUploading(true);
+  async function uploadImages(files: FileList) {
     setUploadError(null);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.url) {
-      setForm((f) => (f ? { ...f, image_url: data.url } : f));
-    } else {
-      setUploadError(data.error ?? "Upload failed.");
+    const current = form?.images.length ?? 0;
+    const room = MAX_IMAGES - current;
+    if (room <= 0) {
+      setUploadError(`You can upload up to ${MAX_IMAGES} photos.`);
+      return;
+    }
+    const picked = Array.from(files).slice(0, room);
+    setUploading(true);
+    for (const file of picked) {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        setForm((f) => (f ? { ...f, images: [...f.images, data.url] } : f));
+      } else {
+        setUploadError(data.error ?? "One image failed to upload.");
+      }
     }
     setUploading(false);
+  }
+
+  function removeImage(idx: number) {
+    setForm((f) => (f ? { ...f, images: f.images.filter((_, i) => i !== idx) } : f));
+  }
+
+  function moveImage(idx: number, dir: -1 | 1) {
+    setForm((f) => {
+      if (!f) return f;
+      const next = [...f.images];
+      const j = idx + dir;
+      if (j < 0 || j >= next.length) return f;
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return { ...f, images: next };
+    });
   }
 
   function openNew() {
@@ -85,8 +109,7 @@ export function ProductManager({
       is_best_seller: p.is_best_seller,
       sizes: p.sizes.join(", "),
       colors: p.colors.join(", "),
-      image_url: p.images[0]?.url ?? "",
-      image_alt: p.images[0]?.alt ?? "",
+      images: p.images.map((i) => i.url),
     });
   }
 
@@ -251,56 +274,91 @@ export function ProductManager({
               />
               <Input label="Sizes (comma separated)" value={form.sizes} onChange={(v) => setForm({ ...form, sizes: v })} />
               <Input label="Colours (comma separated)" value={form.colors} onChange={(v) => setForm({ ...form, colors: v })} />
-              {/* Image upload */}
+              {/* Product photos — up to 10 */}
               <div>
-                <label className="block text-sm font-semibold mb-1.5">Product photo</label>
-                <div className="flex items-center gap-3">
-                  <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-line bg-canvas-soft">
-                    {form.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={form.image_url} alt="Preview" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="absolute inset-0 grid place-items-center text-[10px] text-muted text-center px-1">
-                        No photo
-                      </span>
-                    )}
+                <label className="block text-sm font-semibold mb-1.5">
+                  Product photos{" "}
+                  <span className="text-muted font-normal">
+                    ({form.images.length}/{MAX_IMAGES})
+                  </span>
+                </label>
+
+                {form.images.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {form.images.map((url, i) => (
+                      <div
+                        key={url + i}
+                        className="group relative aspect-[4/5] overflow-hidden rounded-[var(--radius-md)] border border-line bg-canvas-soft"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                        {i === 0 && (
+                          <span className="absolute top-1 left-1 rounded bg-accent text-white text-[9px] font-bold px-1.5 py-0.5">
+                            MAIN
+                          </span>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 flex justify-between bg-ink/70 px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => moveImage(i, -1)}
+                            disabled={i === 0}
+                            aria-label="Move left"
+                            className="text-canvas text-xs px-1 disabled:opacity-30 cursor-pointer"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            aria-label="Remove photo"
+                            className="text-canvas text-xs px-1 hover:text-danger cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveImage(i, 1)}
+                            disabled={i === form.images.length - 1}
+                            aria-label="Move right"
+                            className="text-canvas text-xs px-1 disabled:opacity-30 cursor-pointer"
+                          >
+                            ›
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex-1">
-                    <label
-                      className={cn(
-                        "inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-ink text-canvas text-sm font-semibold px-4 py-2.5 cursor-pointer hover:bg-ink-soft transition-colors",
-                        uploading && "opacity-60 pointer-events-none",
-                      )}
-                    >
-                      {uploading ? "Uploading…" : form.image_url ? "Change photo" : "Upload photo"}
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/avif"
-                        className="sr-only"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) uploadImage(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    <p className="mt-1.5 text-xs text-muted">PNG/JPG/WebP, up to 5MB.</p>
-                    {uploadError && (
-                      <p className="mt-1 text-xs text-danger">{uploadError}</p>
+                )}
+
+                {form.images.length < MAX_IMAGES && (
+                  <label
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-ink text-canvas text-sm font-semibold px-4 py-2.5 cursor-pointer hover:bg-ink-soft transition-colors",
+                      uploading && "opacity-60 pointer-events-none",
                     )}
-                  </div>
-                </div>
-                <details className="mt-2">
-                  <summary className="text-xs text-muted cursor-pointer">
-                    or paste an image link
-                  </summary>
-                  <input
-                    value={form.image_url}
-                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                    placeholder="https://…"
-                    className="mt-2 w-full h-10 rounded-[var(--radius-md)] border border-line bg-canvas px-3 text-sm outline-none focus:border-accent"
-                  />
-                </details>
+                  >
+                    {uploading
+                      ? "Uploading…"
+                      : form.images.length === 0
+                        ? "Upload photos"
+                        : "Add more photos"}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/png,image/jpeg,image/webp,image/avif"
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.files?.length) uploadImages(e.target.files);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="mt-1.5 text-xs text-muted">
+                  Up to {MAX_IMAGES} photos · PNG/JPG/WebP, max 5MB each · first photo is
+                  the main one (drag order with ‹ ›).
+                </p>
+                {uploadError && <p className="mt-1 text-xs text-danger">{uploadError}</p>}
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1.5">Description</label>

@@ -50,13 +50,21 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-  if (body.image_url) {
-    await supabase.from("product_images").insert({
-      product_id: data.id,
-      url: String(body.image_url),
-      alt: String(body.image_alt ?? name),
-      sort_order: 1,
-    });
+  // Up to 10 images, ordered. Accepts images[] (preferred) or single image_url.
+  const urls: string[] = Array.isArray(body.images)
+    ? body.images.map(String)
+    : body.image_url
+      ? [String(body.image_url)]
+      : [];
+  if (urls.length) {
+    await supabase.from("product_images").insert(
+      urls.slice(0, 10).map((url, i) => ({
+        product_id: data.id,
+        url,
+        alt: name,
+        sort_order: i + 1,
+      })),
+    );
   }
 
   return NextResponse.json({ product: data }, { status: 201 });
